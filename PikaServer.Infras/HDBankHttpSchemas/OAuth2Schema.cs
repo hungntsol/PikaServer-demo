@@ -2,20 +2,6 @@
 
 namespace PikaServer.Infras.HDBankHttpSchemas;
 
-public class OAuth2TokenRequest
-{
-	public OAuth2TokenRequest(string clientId, string refreshToken, string grantType)
-	{
-		ClientId = clientId;
-		RefreshToken = refreshToken;
-		GrantType = grantType;
-	}
-
-	public string ClientId { get; set; }
-	public string GrantType { get; set; }
-	public string RefreshToken { get; set; }
-}
-
 public class OAuth2Response
 {
 	public OAuth2Response(string idToken, string accessToken, int expiresIn, string tokenType)

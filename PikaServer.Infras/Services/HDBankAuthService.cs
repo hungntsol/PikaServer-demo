@@ -2,6 +2,7 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using PikaServer.Common.Utils;
 using PikaServer.Infras.AppSettings;
 using PikaServer.Infras.Constants;
 using PikaServer.Infras.HDBankHttpSchemas;
@@ -24,7 +25,8 @@ public class HDBankAuthService : IHDBankAuthService
 
 	public HDBankAuthService(IOptions<HDBankApiSetting> hdBankApiSettingOption,
 		ILogger<HDBankAuthService> logger,
-		IHDBankTokenManager hdBankTokenManager, IHttpClientFactory httpClientFactory)
+		IHDBankTokenManager hdBankTokenManager,
+		IHttpClientFactory httpClientFactory)
 	{
 		_logger = logger;
 		_hdBankTokenManager = hdBankTokenManager;
@@ -34,20 +36,26 @@ public class HDBankAuthService : IHDBankAuthService
 
 	public async Task<OAuth2Response> OAuth2Async(CancellationToken cancellationToken = default)
 	{
-		var httpClient = _httpClientFactory.CreateClient(HttpClientConstants.HDBankClientName);
-		var body = new OAuth2TokenRequest(_hdBankApiSetting.ClientId, _hdBankApiSetting.RefreshToken, OAuth2GrantType);
+		var httpClient = _httpClientFactory.CreateClient(HttpClientConstants.HDBankAuthClientName);
+		var formContent = new FormUrlEncodedContent(new[]
+		{
+			new KeyValuePair<string, string>("client_id", _hdBankApiSetting.ClientId),
+			new KeyValuePair<string, string>("grant_type", "refresh_token"),
+			new KeyValuePair<string, string>("refresh_token", _hdBankApiSetting.RefreshToken)
+		});
 
-		var response = await httpClient.PostAsJsonAsync("/oauth2/token", body, cancellationToken: cancellationToken);
+		var response = await httpClient.PostAsync("/oauth2/token", formContent, cancellationToken);
 		if (response.StatusCode != HttpStatusCode.OK)
 		{
 			_logger.LogError("Perform OAuth2 fail with error {statusCode}, {error}",
-				response.StatusCode, response.Content.ReadAsStringAsync(cancellationToken));
+				response.StatusCode, await response.Content.ReadAsStringAsync(cancellationToken));
 		}
 
 		var responseData =
 			await response.Content.ReadFromJsonAsync<OAuth2Response>(cancellationToken: cancellationToken);
 		if (responseData is not null)
 		{
+			_logger.LogInformation("Perform OAuth2 success: {data}", PikaJsonConvert.SerializeObject(responseData));
 			return responseData;
 		}
 

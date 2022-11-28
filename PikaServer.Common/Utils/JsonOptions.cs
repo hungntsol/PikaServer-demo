@@ -3,7 +3,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace PikaServer.Common.Utils;
 
-public class JsonOptions
+public static class JsonOptions
 {
 	public static JsonSerializerSettings Default => BuildDefault();
 

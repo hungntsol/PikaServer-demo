@@ -2,12 +2,11 @@
 
 public interface IHDBankTokenManager
 {
-	Task<string> GetPublicKey();
-	Task RefreshPublicKey();
-	Task<string> GetTokenAsync();
+	//Task<string> GetPublicKey();
+	//Task RefreshPublicKey();
+	//Task<string> GetTokenAsync();
 }
 
-public class HDBankTokenManager
+public class HDBankTokenManager : IHDBankTokenManager
 {
-	
 }
