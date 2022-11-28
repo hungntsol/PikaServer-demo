@@ -1,13 +1,16 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Net.Http.Headers;
+using Microsoft.Extensions.DependencyInjection;
 using PikaServer.Infras.AppSettings;
 using PikaServer.Infras.Constants;
-using PikaServer.Infras.Services;
+using PikaServer.Infras.Services.Auth;
+using PikaServer.Infras.Services.Credential;
+using PikaServer.Infras.Services.Interfaces;
 
 namespace PikaServer.Infras;
 
-public static class DependencyInjections
+public static class DependencyInjection
 {
-	public static IServiceCollection UseHDBankAuth(this IServiceCollection services, Action<HDBankApiSetting> options)
+	public static IServiceCollection UseHDBankVendor(this IServiceCollection services, Action<HDBankApiSetting> options)
 	{
 		// register setting options
 		services.Configure(options);
@@ -26,11 +29,16 @@ public static class DependencyInjections
 		services.AddHttpClient(HttpClientConstants.HDBankClientName, http =>
 		{
 			http.BaseAddress = new Uri(hdBankApiSetting.BaseUrl);
-			http.DefaultRequestHeaders.Add("x-api-key", hdBankApiSetting.ClientId);
+			http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+			http.DefaultRequestHeaders.TryAddWithoutValidation("x-api-key", hdBankApiSetting.ApiKey);
 		});
 
 		// register transient services
 		services.AddTransient<IHDBankAuthService, HDBankAuthService>();
+		services.AddTransient<IHDBankCredentialManager, HDBankCredentialManager>();
+
+		// singleton
+		services.AddSingleton<HDBankCredential>();
 
 		return services;
 	}

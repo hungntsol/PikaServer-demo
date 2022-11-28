@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PikaServer.Infras.Services;
+using PikaServer.Infras.Services.Interfaces;
 
 namespace PikaServer.Controllers;
 

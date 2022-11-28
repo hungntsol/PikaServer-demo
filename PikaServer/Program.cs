@@ -12,6 +12,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.ConfigStartup(builder.Configuration);
 
 var app = builder.Build();
+app.Services.PostExecution();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

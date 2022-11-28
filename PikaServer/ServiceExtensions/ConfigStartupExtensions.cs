@@ -1,6 +1,4 @@
 ﻿using PikaServer.Infras;
-using PikaServer.Infras.AppSettings;
-using PikaServer.Infras.Services;
 
 namespace PikaServer.ServiceExtensions;
 
@@ -22,15 +20,12 @@ public static class ConfigStartupExtensions
 
 	private static IServiceCollection RegisterAppSettings(IServiceCollection services, IConfiguration configuration)
 	{
-		services.Configure<HDBankApiSetting>(configuration.GetSection("HDBankApi"));
-
 		return services;
 	}
 
 	private static IServiceCollection RegisterServices(IServiceCollection services, IConfiguration configuration)
 	{
-		services.UseHDBankAuth(opt => configuration.GetSection("HDBankApi").Bind(opt));
-		services.AddTransient<IHDBankTokenManager, HDBankTokenManager>();
+		services.UseHDBankVendor(opt => configuration.GetSection("HDBankApi").Bind(opt));
 
 		return services;
 	}
