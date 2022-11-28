@@ -1,6 +1,6 @@
 ﻿namespace PikaServer.Infras.Services;
 
-public interface IHDBrankTokenManager
+public interface IHDBankTokenManager
 {
 	Task<string> GetPublicKey();
 	Task RefreshPublicKey();
