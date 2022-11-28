@@ -2,7 +2,7 @@
 
 public class HDBankApiSetting
 {
-	public string AuthServer { get; set; }
+	public string AuthUrl { get; set; }
 	public string BaseUrl { get; set; }
 	public string ClientId { get; set; }
 	public string RefreshToken { get; set; }
