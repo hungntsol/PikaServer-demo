@@ -6,13 +6,13 @@ using PikaServer.Common.HdBankHttpApiBase;
 using PikaServer.Infras.Constants;
 using PikaServer.Infras.HdBankHttpSchemas;
 using PikaServer.Infras.Services.Interfaces;
+using XC.RSAUtil;
 
 namespace PikaServer.Infras.Services.Credential;
 
 public class HdBankCredentialManager : IHdBankCredentialManager
 {
 	private static readonly int DwKeySize = 1024;
-	private static readonly byte[] Exponent = { 1, 0, 1 };
 
 	private readonly IHdBankAuthService _authService;
 	private readonly HdBankCredential _credential;
@@ -81,15 +81,13 @@ public class HdBankCredentialManager : IHdBankCredentialManager
 	public string CreateCredential(string username, string password)
 	{
 		var plainData = $"{{\"username\":\"{username}\",\"password\":\"{password}\"}}";
-		var dataToEncryptBytes = Encoding.UTF8.GetBytes(plainData);
+		var dataByteToEncrypt = Encoding.UTF8.GetBytes(plainData);
 
-		using var rsa = new RSACryptoServiceProvider(DwKeySize);
+		var xml = RsaKeyConvert.PublicKeyPemToXml(GetPublicKey());
+		var rsa = new RSACryptoServiceProvider(DwKeySize);
+		rsa.FromXmlString(xml);
 
-		var rsaParam = rsa.ExportParameters(false);
-		rsaParam.Modulus = Convert.FromBase64String(GetPublicKey());
-		rsaParam.Exponent = Exponent;
-		rsa.ImportParameters(rsaParam);
-
-		return Convert.ToBase64String(rsa.Encrypt(dataToEncryptBytes, false));
+		var encrypted = rsa.Encrypt(dataByteToEncrypt, false);
+		return Convert.ToBase64String(encrypted);
 	}
 }
