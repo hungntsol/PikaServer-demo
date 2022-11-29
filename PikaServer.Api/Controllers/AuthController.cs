@@ -8,16 +8,16 @@ namespace PikaServer.Api.Controllers;
 
 public class AuthController : ApiV1ControllerBase
 {
-	private readonly IHdBankApiFeature _hdBankApiFeature;
 	private readonly IHdBankAuthService _hdBankAuthService;
+	private readonly IHdBankBasicFeature _hdBankBasicFeature;
 	private readonly IHdBankCredentialManager _hdBankCredentialManager;
 
 	public AuthController(IHdBankAuthService hdBankAuthService, IHdBankCredentialManager hdBankCredentialManager,
-		IHdBankApiFeature hdBankApiFeature)
+		IHdBankBasicFeature hdBankBasicFeature)
 	{
 		_hdBankAuthService = hdBankAuthService;
 		_hdBankCredentialManager = hdBankCredentialManager;
-		_hdBankApiFeature = hdBankApiFeature;
+		_hdBankBasicFeature = hdBankBasicFeature;
 	}
 
 	[HttpPost("oauth2/token")]
@@ -32,8 +32,17 @@ public class AuthController : ApiV1ControllerBase
 	public async Task<IActionResult> Register(
 		[FromBody] RegisterRequest request)
 	{
-		return Ok(await _hdBankApiFeature.RegisterAccountAsync(
-			new Account(request.FullName, request.Email, request.IdentityNumber, request.Phone),
+		return Ok(await _hdBankAuthService.RegisterAccountAsync(
+			new Account(request.Username, request.FullName, request.Email, request.IdentityNumber, request.Phone),
+			request.Password));
+	}
+
+	[HttpPost("login")]
+	[AllowAnonymous]
+	public async Task<IActionResult> Login([FromBody] LoginRequest request)
+	{
+		return Ok(await _hdBankAuthService.LoginAccountAsync(
+			new Account { Username = request.Username },
 			request.Password));
 	}
 }

@@ -1,11 +1,11 @@
 ﻿using System.Text.Json.Serialization;
 using PikaServer.Domain.Entities;
 
-namespace PikaServer.Infras.HdBankHttpSchemas;
+namespace PikaServer.Infras.HdBankHttpDataSchemas;
 
-public class RegisterAccountRequestData
+public class RemoteRegisterAccountRequestData
 {
-	public RegisterAccountRequestData(string credential, string email, string fullName, string identityNumber,
+	public RemoteRegisterAccountRequestData(string credential, string email, string fullName, string identityNumber,
 		string key, string phone)
 	{
 		Credential = credential;
@@ -28,9 +28,9 @@ public class RegisterAccountRequestData
 
 	[JsonPropertyName("phone")] public string Phone { get; set; }
 
-	public static RegisterAccountRequestData Create(string credential, string key, Account account)
+	public static RemoteRegisterAccountRequestData Create(string credential, string key, Account account)
 	{
-		return new RegisterAccountRequestData(credential,
+		return new RemoteRegisterAccountRequestData(credential,
 			account.Email,
 			account.FullName,
 			account.IdentityNumber, key,
@@ -38,9 +38,9 @@ public class RegisterAccountRequestData
 	}
 }
 
-public class RegisterAccountResponseData
+public class RemoteRegisterAccountResponseData
 {
-	public RegisterAccountResponseData(string userId)
+	public RemoteRegisterAccountResponseData(string userId)
 	{
 		UserId = userId;
 	}

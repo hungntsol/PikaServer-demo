@@ -16,8 +16,9 @@ public class HdBankRemoteApiRequest<TData>
 
 	public class AuditRequest
 	{
-		[JsonPropertyName("requestId")] public string RequestId { get; set; } = "a7ea23df-7468-439d-9b12-26eb4a760901";
+		[JsonPropertyName("requestId")] public string RequestId { get; set; } = Guid.NewGuid().ToString();
 
-		[JsonPropertyName("requestTime")] public string RequestTime { get; set; } = "1667200102200";
+		[JsonPropertyName("requestTime")]
+		public string RequestTime { get; set; } = DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString();
 	}
 }

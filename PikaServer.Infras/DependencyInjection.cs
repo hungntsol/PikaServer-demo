@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PikaServer.Infras.AppSettings;
 using PikaServer.Infras.Constants;
 using PikaServer.Infras.DelegateHandler;
+using PikaServer.Infras.Helpers;
 using PikaServer.Infras.Services.ApiFeature;
 using PikaServer.Infras.Services.Auth;
 using PikaServer.Infras.Services.Credential;
@@ -26,19 +27,20 @@ public static class DependencyInjection
 		services.AddScoped<HdBankHttpHandler>();
 
 		// register transient services
-		services.AddTransient<IHdBankAuthService, HDBankAuthService>();
+		services.AddTransient<IHdBankAuthService, HdBankAuthService>();
 		services.AddTransient<IHdBankCredentialManager, HdBankCredentialManager>();
-		services.AddTransient<IHdBankApiFeature, HdBankApiFeature>();
+		services.AddTransient<IHdBankBasicFeature, HdBankBasicFeature>();
+		services.AddTransient<RsaCredentialHelper>();
 
 		// register httpClient
-		services.AddHttpClient(HttpClientConstants.HDBankAuthClientName,
+		services.AddHttpClient(HttpClientNameConstants.HdBankAuth,
 			http =>
 			{
 				http.BaseAddress = new Uri(hdBankApiSetting.AuthUrl);
 				http.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
 			});
 
-		services.AddHttpClient(HttpClientConstants.HDBankClientName, http =>
+		services.AddHttpClient(HttpClientNameConstants.HdBank, http =>
 			{
 				http.BaseAddress = new Uri(hdBankApiSetting.BaseUrl);
 				http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));

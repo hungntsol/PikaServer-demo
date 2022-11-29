@@ -1,10 +1,10 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace PikaServer.Infras.HdBankHttpSchemas;
+namespace PikaServer.Infras.HdBankHttpDataSchemas;
 
-public class OAuth2Response
+public class RemoteOAuth2Response
 {
-	public OAuth2Response(string idToken, string accessToken, int expiresIn, string tokenType)
+	public RemoteOAuth2Response(string idToken, string accessToken, int expiresIn, string tokenType)
 	{
 		IdToken = idToken;
 		AccessToken = accessToken;

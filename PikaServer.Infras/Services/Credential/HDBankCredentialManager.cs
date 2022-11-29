@@ -1,19 +1,14 @@
 ﻿using System.Net.Http.Json;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.Extensions.Logging;
 using PikaServer.Common.HdBankHttpApiBase;
 using PikaServer.Infras.Constants;
-using PikaServer.Infras.HdBankHttpSchemas;
+using PikaServer.Infras.HdBankHttpDataSchemas;
 using PikaServer.Infras.Services.Interfaces;
-using XC.RSAUtil;
 
 namespace PikaServer.Infras.Services.Credential;
 
 public class HdBankCredentialManager : IHdBankCredentialManager
 {
-	private static readonly int DwKeySize = 1024;
-
 	private readonly IHdBankAuthService _authService;
 	private readonly HdBankCredential _credential;
 	private readonly IHttpClientFactory _httpClientFactory;
@@ -43,7 +38,7 @@ public class HdBankCredentialManager : IHdBankCredentialManager
 	{
 		await _authService.OAuth2Async(cancellationToken);
 
-		var httpClient = _httpClientFactory.CreateClient(HttpClientConstants.HDBankClientName);
+		var httpClient = _httpClientFactory.CreateClient(HttpClientNameConstants.HdBank);
 
 		var httpResponse = await httpClient.GetAsync("get_key", cancellationToken: cancellationToken);
 		if (!httpResponse.IsSuccessStatusCode)
@@ -58,7 +53,7 @@ public class HdBankCredentialManager : IHdBankCredentialManager
 		try
 		{
 			var responseData =
-				await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<PublicKeyResponseData>>(
+				await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<RemotePublicKeyResponseData>>(
 					cancellationToken: cancellationToken);
 
 			var publicKey = responseData?.Data.Key;
@@ -76,18 +71,5 @@ public class HdBankCredentialManager : IHdBankCredentialManager
 			_logger.LogError(e, "{message}", e.Message);
 			throw new Exception(e.Message);
 		}
-	}
-
-	public string CreateCredential(string username, string password)
-	{
-		var plainData = $"{{\"username\":\"{username}\",\"password\":\"{password}\"}}";
-		var dataByteToEncrypt = Encoding.UTF8.GetBytes(plainData);
-
-		var xml = RsaKeyConvert.PublicKeyPemToXml(GetPublicKey());
-		var rsa = new RSACryptoServiceProvider(DwKeySize);
-		rsa.FromXmlString(xml);
-
-		var encrypted = rsa.Encrypt(dataByteToEncrypt, false);
-		return Convert.ToBase64String(encrypted);
 	}
 }

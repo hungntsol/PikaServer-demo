@@ -2,42 +2,49 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using PikaServer.Common.Extensions;
+using PikaServer.Common.HdBankHttpApiBase;
 using PikaServer.Common.Utils;
+using PikaServer.Domain.Entities;
 using PikaServer.Infras.AppSettings;
 using PikaServer.Infras.Constants;
-using PikaServer.Infras.HdBankHttpSchemas;
+using PikaServer.Infras.HdBankHttpDataSchemas;
+using PikaServer.Infras.Helpers;
 using PikaServer.Infras.Services.Credential;
 using PikaServer.Infras.Services.Interfaces;
 
 namespace PikaServer.Infras.Services.Auth;
 
-public class HDBankAuthService : IHdBankAuthService
+public class HdBankAuthService : IHdBankAuthService
 {
 	private const string OAuth2GrantType = "refresh_token";
 
 	private readonly HdBankApiSetting _hdBankApiSetting;
 	private readonly HdBankCredential _hdBankCredential;
 	private readonly IHttpClientFactory _httpClientFactory;
-	private readonly ILogger<HDBankAuthService> _logger;
+	private readonly ILogger<HdBankAuthService> _logger;
+	private readonly RsaCredentialHelper _rsaCredentialHelper;
 
-	public HDBankAuthService(IOptions<HdBankApiSetting> hdBankApiSettingOption,
-		ILogger<HDBankAuthService> logger,
+	public HdBankAuthService(IOptions<HdBankApiSetting> hdBankApiSettingOption,
+		ILogger<HdBankAuthService> logger,
 		IHttpClientFactory httpClientFactory,
-		HdBankCredential hdBankCredential)
+		HdBankCredential hdBankCredential,
+		RsaCredentialHelper rsaCredentialHelper)
 	{
 		_logger = logger;
 		_httpClientFactory = httpClientFactory;
 		_hdBankCredential = hdBankCredential;
+		_rsaCredentialHelper = rsaCredentialHelper;
 		_hdBankApiSetting = hdBankApiSettingOption.Value;
 	}
 
-	public async Task<OAuth2Response> OAuth2Async(CancellationToken cancellationToken = default)
+	public async Task<RemoteOAuth2Response> OAuth2Async(CancellationToken cancellationToken = default)
 	{
-		var httpClient = _httpClientFactory.CreateClient(HttpClientConstants.HDBankAuthClientName);
+		var httpClient = _httpClientFactory.CreateClient(HttpClientNameConstants.HdBankAuth);
 		var formContent = new FormUrlEncodedContent(new[]
 		{
 			new KeyValuePair<string, string>("client_id", _hdBankApiSetting.ClientId),
-			new KeyValuePair<string, string>("grant_type", "refresh_token"),
+			new KeyValuePair<string, string>("grant_type", OAuth2GrantType),
 			new KeyValuePair<string, string>("refresh_token", _hdBankApiSetting.RefreshToken)
 		});
 
@@ -49,7 +56,7 @@ public class HDBankAuthService : IHdBankAuthService
 		}
 
 		var responseData =
-			await httpResponse.Content.ReadFromJsonAsync<OAuth2Response>(
+			await httpResponse.Content.ReadFromJsonAsync<RemoteOAuth2Response>(
 				cancellationToken: cancellationToken);
 		if (responseData is not null)
 		{
@@ -63,5 +70,51 @@ public class HDBankAuthService : IHdBankAuthService
 
 		_logger.LogError("Cannot read HDBank OAuth2 response data due to null");
 		throw new Exception("Service Unavailable");
+	}
+
+	public async Task<string> RegisterAccountAsync(Account account, string password,
+		CancellationToken cancellationToken = default)
+	{
+		var httpClient = _httpClientFactory.CreateClient(HttpClientNameConstants.HdBank);
+		var reqBody = new HdBankRemoteApiRequest<RemoteRegisterAccountRequestData>(
+			RemoteRegisterAccountRequestData.Create(
+				_rsaCredentialHelper.CreateCredential(account.Username, password),
+				_hdBankCredential.RsaPublicKey,
+				account));
+
+		var httpResponse =
+			await httpClient.PostAsync("register", reqBody.AsJsonContent(), cancellationToken: cancellationToken);
+
+		_logger.LogInformation("Response data {data}", await httpResponse.Content.ReadAsStringAsync(cancellationToken));
+
+		var responseData =
+			await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<RemoteRegisterAccountResponseData>>(
+				cancellationToken: cancellationToken);
+
+		_logger.LogInformation("Register account success: {data}", PikaJsonConvert.SerializeObject(responseData!.Data));
+		return responseData.Data.UserId;
+	}
+
+	public async Task<RemoteLoginAccountResult> LoginAccountAsync(Account account, string password,
+		CancellationToken cancellationToken = default)
+	{
+		var httpClient = _httpClientFactory.CreateClient(HttpClientNameConstants.HdBank);
+
+		// prepare body
+		var reqBody = new HdBankRemoteApiRequest<RemoteLoginAccountRequestData>(new RemoteLoginAccountRequestData(
+			_rsaCredentialHelper.CreateCredential(account.Username, password),
+			_hdBankCredential.RsaPublicKey));
+
+		// send req
+		var httpResponse = await httpClient.PostAsync("login", reqBody.AsJsonContent(), cancellationToken);
+
+		var responseData =
+			await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<RemoteLoginAccountResponseData>>(
+				cancellationToken: cancellationToken);
+
+		// check login
+		return string.IsNullOrEmpty(responseData?.Data.AccountNo)
+			? RemoteLoginAccountResult.Fail()
+			: RemoteLoginAccountResult.Success(responseData.Data.AccountNo);
 	}
 }
