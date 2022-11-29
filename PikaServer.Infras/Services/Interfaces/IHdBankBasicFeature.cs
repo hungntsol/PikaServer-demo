@@ -2,4 +2,5 @@
 
 public interface IHdBankBasicFeature
 {
+	Task<double?> GetBalanceAsync(string accountNo, CancellationToken cancellationToken = default);
 }
