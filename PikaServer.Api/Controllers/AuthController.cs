@@ -45,4 +45,11 @@ public class AuthController : ApiV1ControllerBase
 			new Account { Username = request.Username },
 			request.Password));
 	}
+
+	[HttpPost("change_password")]
+	[AllowAnonymous]
+	public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+	{
+		return Ok(await _hdBankAuthService.ChangePassword(request.Username, request.OldPassword, request.NewPassword));
+	}
 }

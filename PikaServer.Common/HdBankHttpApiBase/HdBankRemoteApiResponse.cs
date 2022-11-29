@@ -13,23 +13,28 @@ public class HdBankRemoteApiResponse<TData>
 	[JsonPropertyName("data")] public TData Data { get; set; }
 
 	[JsonPropertyName("response")] public AuditResponse Response { get; set; }
+}
 
-	public class AuditResponse
+public class AuditResponse
+{
+	public AuditResponse(string responseId, string responseCode, string responseMessage, string responseTime)
 	{
-		public AuditResponse(string responseId, string responseCode, string responseMessage, string responseTime)
-		{
-			ResponseId = responseId;
-			ResponseCode = responseCode;
-			ResponseMessage = responseMessage;
-			ResponseTime = responseTime;
-		}
+		ResponseId = responseId;
+		ResponseCode = responseCode;
+		ResponseMessage = responseMessage;
+		ResponseTime = responseTime;
+	}
 
-		[JsonPropertyName("responseId")] public string ResponseId { get; set; }
+	[JsonPropertyName("responseId")] public string ResponseId { get; set; }
 
-		[JsonPropertyName("responseCode")] public string ResponseCode { get; set; }
+	[JsonPropertyName("responseCode")] public string ResponseCode { get; set; }
 
-		[JsonPropertyName("responseMessage")] public string ResponseMessage { get; set; }
+	[JsonPropertyName("responseMessage")] public string ResponseMessage { get; set; }
 
-		[JsonPropertyName("responseTime")] public string ResponseTime { get; set; }
+	[JsonPropertyName("responseTime")] public string ResponseTime { get; set; }
+
+	public bool IsResponseCodeSuccess()
+	{
+		return ResponseCode.Equals(HdBankResponseCodeSpec.Success);
 	}
 }

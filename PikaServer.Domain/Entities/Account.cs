@@ -6,7 +6,7 @@ public class Account
 	{
 	}
 
-	public Account(string fullName, string email, string identityNumber, string phone, string username) : this()
+	public Account(string username, string fullName, string email, string identityNumber, string phone) : this()
 	{
 		FullName = fullName;
 		Email = email;

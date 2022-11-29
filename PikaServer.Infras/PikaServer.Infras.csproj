@@ -20,8 +20,4 @@
     <ProjectReference Include="..\PikaServer.Domain\PikaServer.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Helpers\" />
-  </ItemGroup>
-
 </Project>

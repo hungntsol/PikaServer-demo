@@ -21,6 +21,8 @@ public class HdBankAuthService : IHdBankAuthService
 
 	private readonly HdBankApiSetting _hdBankApiSetting;
 	private readonly HdBankCredential _hdBankCredential;
+
+	private readonly HttpClient _httpClient;
 	private readonly IHttpClientFactory _httpClientFactory;
 	private readonly ILogger<HdBankAuthService> _logger;
 	private readonly RsaCredentialHelper _rsaCredentialHelper;
@@ -36,6 +38,8 @@ public class HdBankAuthService : IHdBankAuthService
 		_hdBankCredential = hdBankCredential;
 		_rsaCredentialHelper = rsaCredentialHelper;
 		_hdBankApiSetting = hdBankApiSettingOption.Value;
+
+		_httpClient = _httpClientFactory.CreateClient(HttpClientNameConstants.HdBank);
 	}
 
 	public async Task<RemoteOAuth2Response> OAuth2Async(CancellationToken cancellationToken = default)
@@ -72,10 +76,9 @@ public class HdBankAuthService : IHdBankAuthService
 		throw new Exception("Service Unavailable");
 	}
 
-	public async Task<string> RegisterAccountAsync(Account account, string password,
+	public async Task<string?> RegisterAccountAsync(Account account, string password,
 		CancellationToken cancellationToken = default)
 	{
-		var httpClient = _httpClientFactory.CreateClient(HttpClientNameConstants.HdBank);
 		var reqBody = new HdBankRemoteApiRequest<RemoteRegisterAccountRequestData>(
 			RemoteRegisterAccountRequestData.Create(
 				_rsaCredentialHelper.CreateCredential(account.Username, password),
@@ -83,13 +86,20 @@ public class HdBankAuthService : IHdBankAuthService
 				account));
 
 		var httpResponse =
-			await httpClient.PostAsync("register", reqBody.AsJsonContent(), cancellationToken: cancellationToken);
-
-		_logger.LogInformation("Response data {data}", await httpResponse.Content.ReadAsStringAsync(cancellationToken));
+			await _httpClient.PostAsync("register", reqBody.AsJsonContent(), cancellationToken: cancellationToken);
 
 		var responseData =
 			await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<RemoteRegisterAccountResponseData>>(
 				cancellationToken: cancellationToken);
+
+		EnsureResponseDataHelper.ThrowIfNull(responseData);
+
+		if (!responseData!.Response.IsResponseCodeSuccess())
+		{
+			_logger.LogError("Register account fail due to: {message}",
+				PikaJsonConvert.SerializeObject(responseData.Response));
+			return null;
+		}
 
 		_logger.LogInformation("Register account success: {data}", PikaJsonConvert.SerializeObject(responseData!.Data));
 		return responseData.Data.UserId;
@@ -98,23 +108,59 @@ public class HdBankAuthService : IHdBankAuthService
 	public async Task<RemoteLoginAccountResult> LoginAccountAsync(Account account, string password,
 		CancellationToken cancellationToken = default)
 	{
-		var httpClient = _httpClientFactory.CreateClient(HttpClientNameConstants.HdBank);
-
 		// prepare body
 		var reqBody = new HdBankRemoteApiRequest<RemoteLoginAccountRequestData>(new RemoteLoginAccountRequestData(
 			_rsaCredentialHelper.CreateCredential(account.Username, password),
 			_hdBankCredential.RsaPublicKey));
 
 		// send req
-		var httpResponse = await httpClient.PostAsync("login", reqBody.AsJsonContent(), cancellationToken);
+		var httpResponse = await _httpClient.PostAsync("login", reqBody.AsJsonContent(), cancellationToken);
 
 		var responseData =
 			await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<RemoteLoginAccountResponseData>>(
 				cancellationToken: cancellationToken);
 
+		EnsureResponseDataHelper.ThrowIfNull(responseData);
+
+
+		if (!responseData!.Response.IsResponseCodeSuccess())
+		{
+			_logger.LogError("Register account fail due to: {message}",
+				PikaJsonConvert.SerializeObject(responseData.Response));
+			return RemoteLoginAccountResult.Fail();
+		}
+
 		// check login
 		return string.IsNullOrEmpty(responseData?.Data.AccountNo)
 			? RemoteLoginAccountResult.Fail()
 			: RemoteLoginAccountResult.Success(responseData.Data.AccountNo);
+	}
+
+	public async Task<bool> ChangePassword(string username, string oldPassword, string newPassword,
+		CancellationToken cancellationToken = default)
+	{
+		// prepare body
+		var reqBody = new HdBankRemoteApiRequest<RemoteChangePasswordRequestData>(new RemoteChangePasswordRequestData(
+			_rsaCredentialHelper.CreateCredential(username, oldPassword, newPassword),
+			_hdBankCredential.RsaPublicKey));
+
+		// send req
+		var httpResponse = await _httpClient.PostAsync("change_password", reqBody.AsJsonContent(), cancellationToken);
+
+		// validate response
+		var responseData =
+			await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<object>>(
+				cancellationToken: cancellationToken);
+
+		EnsureResponseDataHelper.ThrowIfNull(responseData);
+
+		if (!responseData!.Response.IsResponseCodeSuccess())
+		{
+			_logger.LogError("Register account fail due to: {message}",
+				PikaJsonConvert.SerializeObject(responseData.Response));
+			return false;
+		}
+
+		return true;
 	}
 }

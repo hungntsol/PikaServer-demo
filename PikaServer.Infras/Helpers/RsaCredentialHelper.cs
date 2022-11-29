@@ -17,16 +17,22 @@ public class RsaCredentialHelper
 		_credential = credential;
 	}
 
-	public string CreateCredential(string username, string password)
+	public string CreateCredential(string username, string password, string? newPassword = null)
 	{
-		var plainData = $"{{\"username\":\"{username}\",\"password\":\"{password}\"}}";
-		var dataByteToEncrypt = Encoding.UTF8.GetBytes(plainData);
+		var dataByteToEncrypt = Encoding.UTF8.GetBytes(CombinePlainContent(username, password, newPassword));
 
 		var rsa = new RSACryptoServiceProvider(DwKeySize);
 		rsa.FromXmlString(GetKeyXmlFormat());
 
 		var encrypted = rsa.Encrypt(dataByteToEncrypt, false);
 		return Convert.ToBase64String(encrypted);
+	}
+
+	public static string CombinePlainContent(string username, string password, string? newPassword = null)
+	{
+		return string.IsNullOrEmpty(newPassword)
+			? $"{{\"username\":\"{username}\",\"password\":\"{password}\"}}"
+			: $"{{\"username\":\"{username}\",\"oldPass\":\"{password}\",\"newPass\":\"{newPassword}\"}}";
 	}
 
 	private string GetKeyXmlFormat()
