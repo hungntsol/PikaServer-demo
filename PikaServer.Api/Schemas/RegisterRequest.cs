@@ -1,9 +1,11 @@
-﻿namespace PikaServer.Api.Schemas;
+﻿using PikaServer.Domain.Entities;
+
+namespace PikaServer.Api.Schemas;
 
 public class RegisterRequest
 {
 	public RegisterRequest(string username, string fullName, string email, string identityNumber, string phone,
-		string password)
+		string password, AccountRole role)
 	{
 		Username = username;
 		FullName = fullName;
@@ -11,6 +13,7 @@ public class RegisterRequest
 		IdentityNumber = identityNumber;
 		Phone = phone;
 		Password = password;
+		Role = role;
 	}
 
 	public string Username { get; set; }
@@ -19,4 +22,5 @@ public class RegisterRequest
 	public string IdentityNumber { get; init; }
 	public string Phone { get; init; }
 	public string Password { get; init; }
+	public AccountRole Role { get; init; }
 }

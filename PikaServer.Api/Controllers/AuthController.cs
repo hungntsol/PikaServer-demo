@@ -33,7 +33,8 @@ public class AuthController : ApiV1ControllerBase
 		[FromBody] RegisterRequest request)
 	{
 		return Ok(await _hdBankAuthService.RegisterAccountAsync(
-			new Account(request.Username, request.FullName, request.Email, request.IdentityNumber, request.Phone),
+			new Account(request.Username, request.FullName, request.Email, request.IdentityNumber, request.Phone,
+				request.Role),
 			request.Password));
 	}
 
