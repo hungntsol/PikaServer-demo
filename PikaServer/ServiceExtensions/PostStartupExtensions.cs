@@ -14,7 +14,7 @@ public static class PostStartupExtensions
 
 	private static void ClaimClientPublicKey(IServiceScope scope)
 	{
-		var services = scope.ServiceProvider.GetRequiredService<IHDBankCredentialManager>();
+		var services = scope.ServiceProvider.GetRequiredService<IHdBankCredentialManager>();
 
 		services.ClaimPublicKeyAsync();
 	}

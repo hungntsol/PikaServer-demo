@@ -1,3 +1,4 @@
+using PikaServer.Api.ServiceExtensions;
 using PikaServer.ServiceExtensions;
 
 var builder = WebApplication.CreateBuilder(args);

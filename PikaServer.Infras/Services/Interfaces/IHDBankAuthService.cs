@@ -1,8 +1,8 @@
-﻿using PikaServer.Infras.HDBankHttpSchemas;
+﻿using PikaServer.Infras.HdBankHttpSchemas;
 
 namespace PikaServer.Infras.Services.Interfaces;
 
-public interface IHDBankAuthService
+public interface IHdBankAuthService
 {
 	Task<OAuth2Response> OAuth2Async(CancellationToken cancellationToken = default);
 }

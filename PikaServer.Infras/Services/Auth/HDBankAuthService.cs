@@ -5,25 +5,25 @@ using Microsoft.Extensions.Options;
 using PikaServer.Common.Utils;
 using PikaServer.Infras.AppSettings;
 using PikaServer.Infras.Constants;
-using PikaServer.Infras.HDBankHttpSchemas;
+using PikaServer.Infras.HdBankHttpSchemas;
 using PikaServer.Infras.Services.Credential;
 using PikaServer.Infras.Services.Interfaces;
 
 namespace PikaServer.Infras.Services.Auth;
 
-public class HDBankAuthService : IHDBankAuthService
+public class HDBankAuthService : IHdBankAuthService
 {
 	private const string OAuth2GrantType = "refresh_token";
 
-	private readonly HDBankApiSetting _hdBankApiSetting;
-	private readonly HDBankCredential _hdBankCredential;
+	private readonly HdBankApiSetting _hdBankApiSetting;
+	private readonly HdBankCredential _hdBankCredential;
 	private readonly IHttpClientFactory _httpClientFactory;
 	private readonly ILogger<HDBankAuthService> _logger;
 
-	public HDBankAuthService(IOptions<HDBankApiSetting> hdBankApiSettingOption,
+	public HDBankAuthService(IOptions<HdBankApiSetting> hdBankApiSettingOption,
 		ILogger<HDBankAuthService> logger,
 		IHttpClientFactory httpClientFactory,
-		HDBankCredential hdBankCredential)
+		HdBankCredential hdBankCredential)
 	{
 		_logger = logger;
 		_httpClientFactory = httpClientFactory;
@@ -49,7 +49,8 @@ public class HDBankAuthService : IHDBankAuthService
 		}
 
 		var responseData =
-			await httpResponse.Content.ReadFromJsonAsync<OAuth2Response>(cancellationToken: cancellationToken);
+			await httpResponse.Content.ReadFromJsonAsync<OAuth2Response>(
+				cancellationToken: cancellationToken);
 		if (responseData is not null)
 		{
 			_logger.LogInformation("Perform OAuth2 success: {data}", PikaJsonConvert.SerializeObject(responseData));

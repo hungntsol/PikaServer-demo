@@ -1,6 +1,6 @@
 ﻿namespace PikaServer.Infras.Services.Credential;
 
-public class HDBankCredential
+public class HdBankCredential
 {
 	public string? IdToken { get; private set; }
 	public string? AccessToken { get; private set; }

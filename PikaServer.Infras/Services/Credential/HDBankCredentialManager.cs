@@ -1,19 +1,26 @@
 ﻿using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Extensions.Logging;
+using PikaServer.Common.HdBankHttpApiBase;
 using PikaServer.Infras.Constants;
+using PikaServer.Infras.HdBankHttpSchemas;
 using PikaServer.Infras.Services.Interfaces;
 
 namespace PikaServer.Infras.Services.Credential;
 
-public class HDBankCredentialManager : IHDBankCredentialManager
+public class HdBankCredentialManager : IHdBankCredentialManager
 {
-	private readonly IHDBankAuthService _authService;
-	private readonly HDBankCredential _credential;
-	private readonly IHttpClientFactory _httpClientFactory;
-	private readonly ILogger<HDBankCredentialManager> _logger;
+	private static readonly int DwKeySize = 1024;
+	private static readonly byte[] Exponent = { 1, 0, 1 };
 
-	public HDBankCredentialManager(HDBankCredential credential, IHDBankAuthService authService,
-		IHttpClientFactory httpClientFactory, ILogger<HDBankCredentialManager> logger)
+	private readonly IHdBankAuthService _authService;
+	private readonly HdBankCredential _credential;
+	private readonly IHttpClientFactory _httpClientFactory;
+	private readonly ILogger<HdBankCredentialManager> _logger;
+
+	public HdBankCredentialManager(HdBankCredential credential, IHdBankAuthService authService,
+		IHttpClientFactory httpClientFactory, ILogger<HdBankCredentialManager> logger)
 	{
 		_credential = credential;
 		_authService = authService;
@@ -22,19 +29,14 @@ public class HDBankCredentialManager : IHDBankCredentialManager
 	}
 
 
-	public async Task<string> GetPublicKeyAsync(CancellationToken cancellationToken = default)
+	public string GetPublicKey()
 	{
 		if (string.IsNullOrEmpty(_credential.RsaPublicKey))
 		{
-			await ClaimPublicKeyAsync(cancellationToken);
+			Task.FromResult(ClaimPublicKeyAsync());
 		}
 
 		return _credential.RsaPublicKey!;
-	}
-
-	public string GetPublicKey()
-	{
-		return GetPublicKeyAsync().Result;
 	}
 
 	public async Task ClaimPublicKeyAsync(CancellationToken cancellationToken = default)
@@ -42,9 +44,8 @@ public class HDBankCredentialManager : IHDBankCredentialManager
 		await _authService.OAuth2Async(cancellationToken);
 
 		var httpClient = _httpClientFactory.CreateClient(HttpClientConstants.HDBankClientName);
-		httpClient.DefaultRequestHeaders.TryAddWithoutValidation("access-token", _credential.IdToken);
 
-		var httpResponse = await httpClient.GetAsync("dev/get_key", cancellationToken: cancellationToken);
+		var httpResponse = await httpClient.GetAsync("get_key", cancellationToken: cancellationToken);
 		if (!httpResponse.IsSuccessStatusCode)
 		{
 			_logger.LogError("{error}", httpResponse.RequestMessage?.ToString());
@@ -54,18 +55,41 @@ public class HDBankCredentialManager : IHDBankCredentialManager
 			throw new Exception("Service Unavailable");
 		}
 
-		var responseData =
-			await httpResponse.Content.ReadFromJsonAsync<HDBankApiPublicKeyResponseModel>(
-				cancellationToken: cancellationToken);
-
-		var publicKey = responseData?.Data.Key;
-
-		if (string.IsNullOrEmpty(publicKey))
+		try
 		{
-			throw new NullReferenceException();
-		}
+			var responseData =
+				await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<PublicKeyResponseData>>(
+					cancellationToken: cancellationToken);
 
-		_logger.LogInformation("Claim public_key success: {pubKey}", publicKey);
-		_credential.SetRsaPublicKey(publicKey);
+			var publicKey = responseData?.Data.Key;
+
+			if (string.IsNullOrEmpty(publicKey))
+			{
+				throw new NullReferenceException();
+			}
+
+			_logger.LogInformation("Claim public_key success: {pubKey}", publicKey);
+			_credential.SetRsaPublicKey(publicKey);
+		}
+		catch (Exception e)
+		{
+			_logger.LogError(e, "{message}", e.Message);
+			throw new Exception(e.Message);
+		}
+	}
+
+	public string CreateCredential(string username, string password)
+	{
+		var plainData = $"{{\"username\":\"{username}\",\"password\":\"{password}\"}}";
+		var dataToEncryptBytes = Encoding.UTF8.GetBytes(plainData);
+
+		using var rsa = new RSACryptoServiceProvider(DwKeySize);
+
+		var rsaParam = rsa.ExportParameters(false);
+		rsaParam.Modulus = Convert.FromBase64String(GetPublicKey());
+		rsaParam.Exponent = Exponent;
+		rsa.ImportParameters(rsaParam);
+
+		return Convert.ToBase64String(rsa.Encrypt(dataToEncryptBytes, false));
 	}
 }

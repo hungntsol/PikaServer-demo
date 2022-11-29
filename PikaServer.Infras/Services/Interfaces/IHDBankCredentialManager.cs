@@ -1,12 +1,10 @@
 ﻿namespace PikaServer.Infras.Services.Interfaces;
 
-public interface IHDBankCredentialManager
+public interface IHdBankCredentialManager
 {
-	Task<string> GetPublicKeyAsync(CancellationToken cancellationToken = default);
-
 	string GetPublicKey();
 
 	Task ClaimPublicKeyAsync(CancellationToken cancellationToken = default);
-	//Task RefreshPublicKey();
-	//Task<string> GetTokenAsync();
+
+	string CreateCredential(string username, string password);
 }

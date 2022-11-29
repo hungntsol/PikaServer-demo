@@ -1,5 +1,6 @@
 ﻿using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
+using PikaServer.Common.Utils;
 
 namespace PikaServer.Common.Extensions;
 
@@ -7,6 +8,7 @@ public static class Extensions
 {
 	public static StringContent AsJsonContent(this object obj)
 	{
-		return new StringContent(JsonConvert.SerializeObject(obj), Encoding.UTF8, "application/json");
+		return new StringContent(JsonSerializer.Serialize(obj, PikaJsonOptions.BuildEscapeNonAscii()),
+			Encoding.UTF8, "application/json");
 	}
 }

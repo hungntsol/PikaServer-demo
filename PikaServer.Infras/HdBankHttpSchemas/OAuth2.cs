@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace PikaServer.Infras.HDBankHttpSchemas;
+namespace PikaServer.Infras.HdBankHttpSchemas;
 
 public class OAuth2Response
 {

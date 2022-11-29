@@ -1,6 +1,6 @@
 ﻿namespace PikaServer.Infras.AppSettings;
 
-public class HDBankApiSetting
+public class HdBankApiSetting
 {
 	public string AuthUrl { get; set; }
 	public string BaseUrl { get; set; }

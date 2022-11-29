@@ -14,7 +14,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Pika.Domain\PikaServer.Domain.csproj" />
     <ProjectReference Include="..\PikaServer.Common\PikaServer.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="DelegateHandler\" />
   </ItemGroup>
 
 </Project>

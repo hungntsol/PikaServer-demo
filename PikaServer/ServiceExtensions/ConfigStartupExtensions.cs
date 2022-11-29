@@ -1,6 +1,6 @@
 ﻿using PikaServer.Infras;
 
-namespace PikaServer.ServiceExtensions;
+namespace PikaServer.Api.ServiceExtensions;
 
 public static class ConfigStartupExtensions
 {
@@ -25,7 +25,7 @@ public static class ConfigStartupExtensions
 
 	private static IServiceCollection RegisterServices(IServiceCollection services, IConfiguration configuration)
 	{
-		services.UseHDBankVendor(opt => configuration.GetSection("HDBankApi").Bind(opt));
+		services.UseHdBankVendor(opt => configuration.GetSection("HDBankApi").Bind(opt));
 
 		return services;
 	}
