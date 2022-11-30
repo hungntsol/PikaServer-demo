@@ -20,7 +20,7 @@ public class UnitOfWork : IUnitOfWork
 
 	public IAccountRepository Account => new AccountRepository(_appDbContext);
 
-	public async Task<int> Commit()
+	public async Task<int> CommitAsync()
 	{
 		return await _appDbContext.SaveChangesAsync();
 	}

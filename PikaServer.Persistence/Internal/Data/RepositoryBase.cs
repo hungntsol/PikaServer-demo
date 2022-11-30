@@ -11,4 +11,9 @@ public abstract class RepositoryBase<TEntity, TContext> : WriteRepository<TEntit
 	protected RepositoryBase(TContext context) : base(context)
 	{
 	}
+
+	public IQueryable<TEntity> AsQueryable()
+	{
+		return DbSet;
+	}
 }
