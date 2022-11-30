@@ -1,5 +1,8 @@
 ﻿using System.Net.Http.Headers;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using PikaServer.Infras.AppSettings;
 using PikaServer.Infras.Constants;
 using PikaServer.Infras.DelegateHandler;
@@ -15,7 +18,7 @@ public static class DependencyInjection
 {
 	public static IServiceCollection UseHdBankVendor(this IServiceCollection services, Action<HdBankApiSetting> options)
 	{
-		// register setting options
+		// register config options
 		services.Configure(options);
 
 		var hdBankApiSetting = new HdBankApiSetting();
@@ -48,6 +51,38 @@ public static class DependencyInjection
 				http.DefaultRequestHeaders.TryAddWithoutValidation("x-api-key", hdBankApiSetting.ApiKey);
 			})
 			.AddHttpMessageHandler(s => s.GetRequiredService<HdBankHttpHandler>());
+
+		return services;
+	}
+
+	public static IServiceCollection UseJwtAuthentication(this IServiceCollection services,
+		Action<JwtAuthSetting> config)
+	{
+		services.Configure(config);
+		var jwtSetting = new JwtAuthSetting();
+		config.Invoke(jwtSetting);
+
+		services
+			.AddAuthentication(options =>
+			{
+				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+				options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+			})
+			.AddJwtBearer(options =>
+			{
+				options.TokenValidationParameters = new TokenValidationParameters
+				{
+					ValidateIssuerSigningKey = true,
+					IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.Secret)),
+					ValidateAudience = false,
+					ValidateIssuer = false
+				};
+			});
+
+		services.AddAuthorization();
+
+		services.AddTransient<IJwtAuthService, JwtAuthService>();
 
 		return services;
 	}

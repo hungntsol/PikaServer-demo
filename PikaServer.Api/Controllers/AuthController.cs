@@ -11,13 +11,15 @@ public class AuthController : ApiV1ControllerBase
 	private readonly IHdBankAuthService _hdBankAuthService;
 	private readonly IHdBankBasicFeature _hdBankBasicFeature;
 	private readonly IHdBankCredentialManager _hdBankCredentialManager;
+	private readonly IJwtAuthService _jwtAuthService;
 
 	public AuthController(IHdBankAuthService hdBankAuthService, IHdBankCredentialManager hdBankCredentialManager,
-		IHdBankBasicFeature hdBankBasicFeature)
+		IHdBankBasicFeature hdBankBasicFeature, IJwtAuthService jwtAuthService)
 	{
 		_hdBankAuthService = hdBankAuthService;
 		_hdBankCredentialManager = hdBankCredentialManager;
 		_hdBankBasicFeature = hdBankBasicFeature;
+		_jwtAuthService = jwtAuthService;
 	}
 
 	[HttpPost("oauth2/token")]
@@ -42,9 +44,22 @@ public class AuthController : ApiV1ControllerBase
 	[AllowAnonymous]
 	public async Task<IActionResult> Login([FromBody] LoginRequest request)
 	{
-		return Ok(await _hdBankAuthService.LoginAccountAsync(
+		var loginResult = await _hdBankAuthService.LoginAccountAsync(
 			new Account { Username = request.Username },
-			request.Password));
+			request.Password);
+
+		if (loginResult.IsSuccess)
+		{
+			// fake user in db, need to get account from db and pass as param
+			var fakeUser = new Account(1, loginResult.AccountNo!, "", "test@email.com", "", "", request.Username,
+				AccountRole.Normal);
+			return Ok(new
+			{
+				AccessToken = _jwtAuthService.CreateJwtAccessToken(fakeUser)
+			});
+		}
+
+		return BadRequest("Fail login");
 	}
 
 	[HttpPost("change_password")]
@@ -52,5 +67,12 @@ public class AuthController : ApiV1ControllerBase
 	public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
 	{
 		return Ok(await _hdBankAuthService.ChangePassword(request.Username, request.OldPassword, request.NewPassword));
+	}
+
+	[HttpGet("test_jwt")]
+	[Authorize]
+	public IActionResult TestAuthJwt()
+	{
+		return Ok();
 	}
 }

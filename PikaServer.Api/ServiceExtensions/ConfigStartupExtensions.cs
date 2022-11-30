@@ -1,4 +1,6 @@
-﻿using PikaServer.Infras;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.OpenApi.Models;
+using PikaServer.Infras;
 
 namespace PikaServer.Api.ServiceExtensions;
 
@@ -14,6 +16,7 @@ public static class ConfigStartupExtensions
 	{
 		RegisterAppSettings(services, configuration);
 		RegisterServices(services, configuration);
+		ConfigSwaggerGen(services);
 
 		return services;
 	}
@@ -26,6 +29,36 @@ public static class ConfigStartupExtensions
 	private static IServiceCollection RegisterServices(IServiceCollection services, IConfiguration configuration)
 	{
 		services.UseHdBankVendor(opt => configuration.GetSection("HDBankApi").Bind(opt));
+		services.UseJwtAuthentication(config => configuration.GetSection("JwtAuth").Bind(config));
+
+		return services;
+	}
+
+	private static IServiceCollection ConfigSwaggerGen(IServiceCollection services)
+	{
+		services.AddSwaggerGen(c =>
+		{
+			c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
+			var jwtSchema = new OpenApiSecurityScheme
+			{
+				Scheme = JwtBearerDefaults.AuthenticationScheme,
+				BearerFormat = "Jwt",
+				Name = "Authorization",
+				In = ParameterLocation.Header,
+				Type = SecuritySchemeType.Http,
+				Description = "Paste ONLY `jwt` here",
+				Reference = new OpenApiReference
+				{
+					Id = JwtBearerDefaults.AuthenticationScheme,
+					Type = ReferenceType.SecurityScheme
+				}
+			};
+			c.AddSecurityDefinition(jwtSchema.Reference.Id, jwtSchema);
+			c.AddSecurityRequirement(new OpenApiSecurityRequirement
+			{
+				{ jwtSchema, ArraySegment<string>.Empty }
+			});
+		});
 
 		return services;
 	}
