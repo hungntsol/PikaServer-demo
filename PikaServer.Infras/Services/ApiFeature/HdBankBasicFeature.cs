@@ -33,7 +33,7 @@ public class HdBankBasicFeature : IHdBankBasicFeature
 			await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<RemoteBalanceResponseData>>(
 				cancellationToken: cancellationToken);
 
-		EnsureResponseDataHelper.ThrowIfNull(response);
+		EnsureHdBankApiResponseHelper.ThrowIfNull(response);
 
 		if (!response!.Response.IsResponseCodeSuccess())
 		{
@@ -42,5 +42,37 @@ public class HdBankBasicFeature : IHdBankBasicFeature
 		}
 
 		return double.Parse(response.Data.Amount);
+	}
+
+	public async Task<AuditResponse> TransferAsync(double amount, string description, string fromAccNo, string toAccNo,
+		CancellationToken cancellationToken = default)
+	{
+		// prepare body
+		var reqBody = new HdBankRemoteApiRequest<RemoteTransferRequestData>(new RemoteTransferRequestData(
+			amount, description, fromAccNo, toAccNo));
+
+		// send req
+		var httpResponse = await _httpClient.PostAsync("transfer", reqBody.AsJsonContent(), cancellationToken);
+
+		// parse result
+		var response =
+			await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<RemoteTransferResponseData>>(
+				cancellationToken: cancellationToken);
+
+		EnsureHdBankApiResponseHelper.ThrowIfNull(response);
+		ProcessTransferLog(response, reqBody);
+
+		return response!.Response;
+	}
+
+	private void ProcessTransferLog(HdBankRemoteApiResponse<RemoteTransferResponseData>? response,
+		HdBankRemoteApiRequest<RemoteTransferRequestData> reqBody)
+	{
+		if (!response!.Response.IsResponseCodeSuccess())
+		{
+			_logger.LogError("Transfer fail due to: {message}", PikaJsonConvert.SerializeObject(response.Response));
+		}
+
+		_logger.LogInformation("Transfer request success: {content}", PikaJsonConvert.SerializeObject(reqBody));
 	}
 }

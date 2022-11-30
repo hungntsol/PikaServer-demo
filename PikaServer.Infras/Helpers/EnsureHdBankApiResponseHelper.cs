@@ -2,11 +2,11 @@
 
 namespace PikaServer.Infras.Helpers;
 
-public static class EnsureResponseDataHelper
+public static class EnsureHdBankApiResponseHelper
 {
 	public static void ThrowIfNull<T>(HdBankRemoteApiResponse<T>? response)
 	{
-		if (response is null)
+		if (response is null || response.Response is null)
 		{
 			throw new NullReferenceException();
 		}

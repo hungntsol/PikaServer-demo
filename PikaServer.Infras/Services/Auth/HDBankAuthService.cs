@@ -92,7 +92,7 @@ public class HdBankAuthService : IHdBankAuthService
 			await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<RemoteRegisterAccountResponseData>>(
 				cancellationToken: cancellationToken);
 
-		EnsureResponseDataHelper.ThrowIfNull(responseData);
+		EnsureHdBankApiResponseHelper.ThrowIfNull(responseData);
 
 		if (!responseData!.Response.IsResponseCodeSuccess())
 		{
@@ -120,7 +120,7 @@ public class HdBankAuthService : IHdBankAuthService
 			await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<RemoteLoginAccountResponseData>>(
 				cancellationToken: cancellationToken);
 
-		EnsureResponseDataHelper.ThrowIfNull(responseData);
+		EnsureHdBankApiResponseHelper.ThrowIfNull(responseData);
 
 
 		if (!responseData!.Response.IsResponseCodeSuccess())
@@ -152,7 +152,7 @@ public class HdBankAuthService : IHdBankAuthService
 			await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<object>>(
 				cancellationToken: cancellationToken);
 
-		EnsureResponseDataHelper.ThrowIfNull(responseData);
+		EnsureHdBankApiResponseHelper.ThrowIfNull(responseData);
 
 		if (!responseData!.Response.IsResponseCodeSuccess())
 		{

@@ -15,7 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Pika.Domain\PikaServer.Domain.csproj" />
     <ProjectReference Include="..\PikaServer.Common\PikaServer.Common.csproj" />
     <ProjectReference Include="..\PikaServer.Domain\PikaServer.Domain.csproj" />
   </ItemGroup>
