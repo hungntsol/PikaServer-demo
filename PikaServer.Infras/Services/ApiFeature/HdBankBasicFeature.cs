@@ -65,6 +65,29 @@ public class HdBankBasicFeature : IHdBankBasicFeature
 		return response!.Response;
 	}
 
+	public async Task<IEnumerable<RemoteTransactionHistoryResponseData.Transaction>> GetTransactionHistAsync(
+		string accountNo, DateTime fromDate, DateTime toDate,
+		CancellationToken cancellationToken = default)
+	{
+		// prepare body
+		var fromDateFormat = fromDate.ToString("ddMMyyyy");
+		var toDateFormat = toDate.ToString("ddMMyyyy");
+		var reqBody = new HdBankRemoteApiRequest<RemoteTransactionHistoryRequestData>(
+			new RemoteTransactionHistoryRequestData(
+				accountNo, fromDateFormat, toDateFormat));
+
+		// send req
+		var httpResponse = await _httpClient.PostAsync("tranhis", reqBody.AsJsonContent(), cancellationToken);
+
+		var response = await httpResponse.Content
+			.ReadFromJsonAsync<HdBankRemoteApiResponse<RemoteTransactionHistoryResponseData>>(
+				cancellationToken: cancellationToken);
+
+		EnsureHdBankApiResponseHelper.ThrowIfNull(response);
+
+		return response!.Data.TransactionList;
+	}
+
 	private void ProcessTransferLog(HdBankRemoteApiResponse<RemoteTransferResponseData>? response,
 		HdBankRemoteApiRequest<RemoteTransferRequestData> reqBody)
 	{

@@ -26,4 +26,11 @@ public class BasicFeatureController : ApiV1ControllerBase
 		return Ok(await _hdBankBasicFeature.TransferAsync(request.Amount, request.Description, request.FromAccountNo,
 			request.ToAccountNo));
 	}
+
+	[HttpPost("transaction_history")]
+	public async Task<IActionResult> TransactionHistory([FromBody] TransactionHistoryRequest request)
+	{
+		return Ok(
+			await _hdBankBasicFeature.GetTransactionHistAsync(request.AccountNo, request.FromDate, request.ToDate));
+	}
 }
