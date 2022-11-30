@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,9 @@ using PikaServer.Infras.Services.ApiFeature;
 using PikaServer.Infras.Services.Auth;
 using PikaServer.Infras.Services.Credential;
 using PikaServer.Infras.Services.Interfaces;
+using Polly;
+using Polly.Contrib.WaitAndRetry;
+using Polly.Extensions.Http;
 
 namespace PikaServer.Infras;
 
@@ -37,11 +41,14 @@ public static class DependencyInjection
 
 		// register httpClient
 		services.AddHttpClient(HttpClientNameConstants.HdBankAuth,
-			http =>
-			{
-				http.BaseAddress = new Uri(hdBankApiSetting.AuthUrl);
-				http.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
-			});
+				http =>
+				{
+					http.BaseAddress = new Uri(hdBankApiSetting.AuthUrl);
+					http.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type",
+						"application/x-www-form-urlencoded");
+				})
+			.SetHandlerLifetime(TimeSpan.FromSeconds(30))
+			.AddPolicyHandler(GetHttpRetryPolicy());
 
 		services.AddHttpClient(HttpClientNameConstants.HdBank, http =>
 			{
@@ -50,6 +57,9 @@ public static class DependencyInjection
 				http.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
 				http.DefaultRequestHeaders.TryAddWithoutValidation("x-api-key", hdBankApiSetting.ApiKey);
 			})
+			.SetHandlerLifetime(TimeSpan.FromSeconds(30))
+			.AddPolicyHandler(GetHttpRetryPolicy())
+			.AddPolicyHandler(GetUnauthorizedHttpRetryPolicy)
 			.AddHttpMessageHandler(s => s.GetRequiredService<HdBankHttpHandler>());
 
 		return services;
@@ -85,5 +95,31 @@ public static class DependencyInjection
 		services.AddTransient<IJwtAuthService, JwtAuthService>();
 
 		return services;
+	}
+
+	private static IAsyncPolicy<HttpResponseMessage> GetHttpRetryPolicy()
+	{
+		var delay = Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromSeconds(1), retryCount: 5);
+
+		return HttpPolicyExtensions
+			.HandleTransientHttpError()
+			.OrResult(msg => msg.StatusCode == HttpStatusCode.NotFound)
+			.WaitAndRetryAsync(delay);
+	}
+
+	private static IAsyncPolicy<HttpResponseMessage> GetUnauthorizedHttpRetryPolicy(IServiceProvider provider,
+		HttpRequestMessage request)
+	{
+		var delay = Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromSeconds(1), retryCount: 5);
+
+		return Policy
+			.HandleResult<HttpResponseMessage>(r =>
+				r.StatusCode == HttpStatusCode.Unauthorized)
+			.WaitAndRetryAsync(delay, async (result, span) =>
+			{
+				request.Headers.Remove("access-token");
+				var authClient = provider.GetRequiredService<IHdBankAuthService>();
+				await authClient.OAuth2Async();
+			});
 	}
 }

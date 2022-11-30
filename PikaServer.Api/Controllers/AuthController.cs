@@ -68,11 +68,4 @@ public class AuthController : ApiV1ControllerBase
 	{
 		return Ok(await _hdBankAuthService.ChangePassword(request.Username, request.OldPassword, request.NewPassword));
 	}
-
-	[HttpGet("test_jwt")]
-	[Authorize]
-	public IActionResult TestAuthJwt()
-	{
-		return Ok();
-	}
 }

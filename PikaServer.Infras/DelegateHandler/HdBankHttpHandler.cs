@@ -18,18 +18,18 @@ public class HdBankHttpHandler : DelegatingHandler
 	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
 		CancellationToken cancellationToken)
 	{
-		request.Headers.TryAddWithoutValidation("access-token", _credential.IdToken);
+		request.Headers.Add("access-token", _credential.IdToken);
 		await HandleLogBodyContentBeforeSend(request, cancellationToken);
 
 		var httpResponse = await base.SendAsync(request, cancellationToken);
 
-		if (httpResponse.IsSuccessStatusCode)
+		if (!httpResponse.IsSuccessStatusCode)
 		{
-			return httpResponse; // end if status in 2xx
+			// log process if not success
+			await HandleLogError(cancellationToken, httpResponse);
 		}
 
-		var errorMsg = await HandleLogError(cancellationToken, httpResponse);
-		throw new Exception(errorMsg);
+		return httpResponse;
 	}
 
 	private async Task HandleLogBodyContentBeforeSend(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -50,13 +50,12 @@ public class HdBankHttpHandler : DelegatingHandler
 			bodyContent);
 	}
 
-	private async Task<string> HandleLogError(CancellationToken cancellationToken, HttpResponseMessage httpResponse)
+	private async Task HandleLogError(CancellationToken cancellationToken, HttpResponseMessage httpResponse)
 	{
 		var errorMsg = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
 		_logger.LogError("{Request}", httpResponse.RequestMessage?.ToString());
 		_logger.LogError("Register account fail due to: status_code: {code}, msg: {message}",
 			httpResponse.StatusCode,
 			errorMsg);
-		return errorMsg;
 	}
 }

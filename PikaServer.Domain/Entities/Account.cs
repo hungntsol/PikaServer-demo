@@ -38,6 +38,5 @@ public class Account
 public enum AccountRole
 {
 	Normal,
-	Vip,
-	Admin
+	Official
 }
