@@ -1,11 +1,12 @@
-﻿using System.Net.Http.Json;
+﻿using System.Globalization;
+using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 using PikaServer.Common.Extensions;
 using PikaServer.Common.HdBankHttpApiBase;
 using PikaServer.Common.Utils;
 using PikaServer.Infras.Constants;
-using PikaServer.Infras.HdBankHttpDataSchemas;
 using PikaServer.Infras.Helpers;
+using PikaServer.Infras.RemoteApiDataSpec;
 using PikaServer.Infras.Services.Interfaces;
 
 namespace PikaServer.Infras.Services.ApiFeature;
@@ -86,6 +87,42 @@ public class HdBankBasicFeature : IHdBankBasicFeature
 		EnsureHdBankApiResponseHelper.ThrowIfNull(response);
 
 		return response!.Data.TransactionList;
+	}
+
+	public async Task<IEnumerable<RemoteFeePaymentResponseData.FeePayment>> GetFeePaymentAsync(string sdId,
+		CancellationToken cancellationToken = default)
+	{
+		// prepare body
+		var reqBody =
+			new HdBankRemoteApiRequest<RemoteFeePaymentRequestData>(new RemoteFeePaymentRequestData(sdId));
+
+		// send req
+		var httpResponse = await _httpClient.PostAsync("getpayment", reqBody.AsJsonContent(), cancellationToken);
+
+		var response =
+			await httpResponse.Content.ReadFromJsonAsync<HdBankRemoteApiResponse<RemoteFeePaymentResponseData>>(
+				cancellationToken: cancellationToken);
+
+		EnsureHdBankApiResponseHelper.ThrowIfNull(response);
+
+		return response!.Data.Payments;
+	}
+
+	public async Task<AuditResponse> CheckoutFeeAsync(string sdId, double amount, string description, string fromAccNo,
+		CancellationToken cancellationToken = default)
+	{
+		var reqBody = new HdBankRemoteApiRequest<RemoteCheckoutFeeRequestData>(new RemoteCheckoutFeeRequestData(
+			sdId, amount.ToString(CultureInfo.InvariantCulture), description, fromAccNo));
+
+		var httpResponse = await _httpClient.PostAsync("payment", reqBody.AsJsonContent(), cancellationToken);
+
+		var response = await httpResponse.Content
+			.ReadFromJsonAsync<HdBankRemoteApiResponse<RemoteCheckoutFeeResponseData>>(
+				cancellationToken: cancellationToken);
+
+		EnsureHdBankApiResponseHelper.ThrowIfNull(response);
+
+		return response!.Response;
 	}
 
 	private void ProcessTransferLog(HdBankRemoteApiResponse<RemoteTransferResponseData>? response,

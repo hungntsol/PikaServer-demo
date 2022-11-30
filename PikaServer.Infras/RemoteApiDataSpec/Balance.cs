@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace PikaServer.Infras.HdBankHttpDataSchemas;
+namespace PikaServer.Infras.RemoteApiDataSpec;
 
 public class RemoteBalanceRequestData
 {

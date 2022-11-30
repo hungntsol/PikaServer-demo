@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using PikaServer.Common.HdBankHttpApiBase;
 using PikaServer.Infras.Constants;
-using PikaServer.Infras.HdBankHttpDataSchemas;
+using PikaServer.Infras.RemoteApiDataSpec;
 using PikaServer.Infras.Services.Interfaces;
 
 namespace PikaServer.Infras.Services.Credential;

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using PikaServer.Domain.Entities;
 
-namespace PikaServer.Infras.HdBankHttpDataSchemas;
+namespace PikaServer.Infras.RemoteApiDataSpec;
 
 public class RemoteRegisterAccountRequestData
 {

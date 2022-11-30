@@ -1,4 +1,4 @@
-﻿namespace PikaServer.Infras.HdBankHttpDataSchemas;
+﻿namespace PikaServer.Infras.RemoteApiDataSpec;
 
 public class RemoteChangePasswordRequestData : RemoteLoginAccountRequestData
 {

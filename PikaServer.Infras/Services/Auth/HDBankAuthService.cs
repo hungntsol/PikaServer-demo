@@ -8,8 +8,8 @@ using PikaServer.Common.Utils;
 using PikaServer.Domain.Entities;
 using PikaServer.Infras.AppSettings;
 using PikaServer.Infras.Constants;
-using PikaServer.Infras.HdBankHttpDataSchemas;
 using PikaServer.Infras.Helpers;
+using PikaServer.Infras.RemoteApiDataSpec;
 using PikaServer.Infras.Services.Credential;
 using PikaServer.Infras.Services.Interfaces;
 

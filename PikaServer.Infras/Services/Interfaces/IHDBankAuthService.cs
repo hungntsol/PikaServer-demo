@@ -1,5 +1,5 @@
 ﻿using PikaServer.Domain.Entities;
-using PikaServer.Infras.HdBankHttpDataSchemas;
+using PikaServer.Infras.RemoteApiDataSpec;
 
 namespace PikaServer.Infras.Services.Interfaces;
 

@@ -33,4 +33,17 @@ public class BasicFeatureController : ApiV1ControllerBase
 		return Ok(
 			await _hdBankBasicFeature.GetTransactionHistAsync(request.AccountNo, request.FromDate, request.ToDate));
 	}
+
+	[HttpGet("get_payment/{sdId}")]
+	public async Task<IActionResult> GetPaymentFee([FromRoute] string sdId)
+	{
+		return Ok(await _hdBankBasicFeature.GetFeePaymentAsync(sdId));
+	}
+
+	[HttpPost("fee_payment")]
+	public async Task<IActionResult> Payment([FromBody] FeePaymentRequest request)
+	{
+		return Ok(await _hdBankBasicFeature.CheckoutFeeAsync(request.SdId, request.Amount, request.Description,
+			request.FromAaccount));
+	}
 }
