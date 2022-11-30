@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using PikaServer.Infras;
+using PikaServer.Persistence;
 
 namespace PikaServer.Api.ServiceExtensions;
 
@@ -30,6 +31,7 @@ public static class ConfigStartupExtensions
 	{
 		services.UseHdBankVendor(opt => configuration.GetSection("HDBankApi").Bind(opt));
 		services.UseJwtAuthentication(config => configuration.GetSection("JwtAuth").Bind(config));
+		services.UseDbPersistence(configuration.GetValue<string>("MsSql:ConnectionString"));
 
 		return services;
 	}

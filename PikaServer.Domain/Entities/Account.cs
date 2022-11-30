@@ -1,6 +1,6 @@
 ﻿namespace PikaServer.Domain.Entities;
 
-public class Account
+public class Account : RootEntityBase
 {
 	public Account()
 	{
@@ -25,7 +25,6 @@ public class Account
 		HdBankUserId = hdBankUserId;
 	}
 
-	public int Id { get; set; }
 	public string HdBankUserId { get; set; }
 	public string FullName { get; set; }
 	public string Username { get; set; }

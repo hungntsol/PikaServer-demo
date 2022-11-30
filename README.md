@@ -1,0 +1,3 @@
+- Step to add migrations
+	- install dotnet-ef cli, at PikaServer.Persistence directory run `dotnet new tool-manifest` -> `dotnet tool install --local dotnet-ef --version 6.*`
+	- run `dotnet ef migrations add ${name} -s ../PikaServer.Api/` to create a snapshot
